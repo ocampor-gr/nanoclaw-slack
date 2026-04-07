@@ -43,15 +43,15 @@ export class SlackChannel implements Channel {
   constructor(opts: SlackChannelOpts) {
     this.opts = opts;
 
-    // Read tokens from .env (not process.env — keeps secrets off the environment
-    // so they don't leak to child processes, matching NanoClaw's security pattern)
+    // Read tokens from process.env first, then fall back to .env file.
+    // This supports both Docker (env vars via docker-compose) and bare-metal (.env file).
     const env = readEnvFile(['SLACK_BOT_TOKEN', 'SLACK_APP_TOKEN']);
-    const botToken = env.SLACK_BOT_TOKEN;
-    const appToken = env.SLACK_APP_TOKEN;
+    const botToken = process.env.SLACK_BOT_TOKEN || env.SLACK_BOT_TOKEN;
+    const appToken = process.env.SLACK_APP_TOKEN || env.SLACK_APP_TOKEN;
 
     if (!botToken || !appToken) {
       throw new Error(
-        'SLACK_BOT_TOKEN and SLACK_APP_TOKEN must be set in .env',
+        'SLACK_BOT_TOKEN and SLACK_APP_TOKEN must be set in environment or .env',
       );
     }
 
